@@ -30,3 +30,23 @@ SELECT a, b FROM hw3.test_bool;
 SELECT pilot_name, array_dims(meal) AS meal_dimensions,
        meal[1][1] AS day1_main, meal[4][3] AS day4_drink
 FROM hw3.pilots ORDER BY pilot_name;
+
+-- DZ4: constraints, role-oriented views, and JSONB fields.
+SELECT record_book, subject, mark, test_form
+FROM hw4.progress
+ORDER BY record_book, subject;
+
+SELECT role_name, row_count
+FROM hw4.view_inventory
+ORDER BY role_name;
+
+SELECT model, specifications #>> '{engines,type}' AS engine_type
+FROM hw4.aircrafts
+ORDER BY aircraft_code;
+
+-- DZ5: reusable query results over the persisted aviation tables.
+SELECT * FROM hw5.five_letter_surnames ORDER BY passenger_name;
+SELECT * FROM hw5.canonical_routes ORDER BY city_1, city_2;
+SELECT * FROM hw5.route_price_summary ORDER BY departure_city, arrival_city;
+SELECT * FROM hw5.booking_ranges ORDER BY min_sum;
+SELECT * FROM hw5.cities_without_moscow_flights ORDER BY city;

@@ -27,6 +27,47 @@ BEGIN
     END IF;
 END $$;
 
+DO $$
+BEGIN
+    IF (SELECT count(*) FROM hw4.students) <> 2
+       OR (SELECT count(*) FROM hw4.progress) <> 3
+       OR (SELECT count(*) FROM hw4.flights) <> 9
+       OR (SELECT count(*) FROM hw4.view_inventory) <> 4 THEN
+        RAISE EXCEPTION 'DZ4 tables or views have unexpected row counts';
+    END IF;
+
+    BEGIN
+        INSERT INTO hw4.students VALUES (99901, '   ', 9999, 999999);
+        RAISE EXCEPTION 'Whitespace-only student name was accepted';
+    EXCEPTION WHEN check_violation THEN
+        RAISE NOTICE 'Visible student name constraint verified';
+    END;
+
+    BEGIN
+        INSERT INTO hw4.progress VALUES
+            (12300, 'Физика', '2025/2026', 2, 2, 'зачет');
+        RAISE EXCEPTION 'Invalid pass/fail mark was accepted';
+    EXCEPTION WHEN check_violation THEN
+        RAISE NOTICE 'Form-dependent mark constraint verified';
+    END;
+
+    IF (SELECT count(*) FROM hw5.canonical_routes) <> 4 THEN
+        RAISE EXCEPTION 'Reverse-route deduplication produced an unexpected count';
+    END IF;
+    IF (SELECT count(*) FROM hw5.route_price_summary WHERE max_price IS NULL) <> 5 THEN
+        RAISE EXCEPTION 'Unsold routes were not retained by LEFT JOIN';
+    END IF;
+    IF (SELECT count(*) FROM hw5.booking_ranges) <> 13 THEN
+        RAISE EXCEPTION 'Recursive booking ranges produced an unexpected count';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM hw5.cities_without_moscow_flights
+        WHERE city NOT IN ('Казань', 'Пермь')
+    ) OR (SELECT count(*) FROM hw5.cities_without_moscow_flights) <> 2 THEN
+        RAISE EXCEPTION 'EXCEPT query returned unexpected cities';
+    END IF;
+END $$;
+
 -- The database rejects overlapping active reservations for one table.
 DO $$
 DECLARE
