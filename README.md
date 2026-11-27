@@ -1,78 +1,78 @@
 # PostgreSQL Homework Lab
 
-Рабочая PostgreSQL-база по пяти учебным работам Анны Синявской. Репозиторий не просто хранит отчёты: Docker с нуля создаёт настоящие таблицы, связи, представления, функции, триггеры и тестовые данные, а автоматические проверки доказывают, что ограничения работают.
+A reproducible PostgreSQL database project based on five SQL assignments by Anna Siniavskaia. Docker builds the database from scratch with tables, relationships, views, functions, triggers, synthetic data, and automated integrity checks.
 
-## Запуск одной командой
+## Quick start
 
-Нужен только Docker Desktop.
+Docker Desktop with Docker Compose is required.
 
 ```bash
 sh scripts/demo.sh
 ```
 
-После запуска таблицы можно открыть в браузере: [http://localhost:8088](http://localhost:8088).
+After startup, browse the tables in Adminer at [http://localhost:8088](http://localhost:8088).
 
-| Поле Adminer | Значение |
+| Adminer field | Value |
 | --- | --- |
-| Движок | PostgreSQL |
-| Сервер | `db` |
-| Пользователь | `homework` |
-| Пароль | `homework_local` |
-| База данных | `homework` |
+| System | PostgreSQL |
+| Server | `db` |
+| Username | `homework` |
+| Password | `homework_local` |
+| Database | `homework` |
 
-Свой пароль можно задать переменной `POSTGRES_PASSWORD`. Порты доступны только на `127.0.0.1`, поэтому учебная база не публикуется в локальную сеть.
+Set `POSTGRES_PASSWORD` to use a different local password. The ports bind to `127.0.0.1`, keeping the database accessible only from the local machine.
 
-## Что создаётся
+## Database contents
 
-| Работа | Схема | Реализация |
+| Assignment | Schema | Implementation |
 | --- | --- | --- |
-| ДЗ1 | `restaurant` | рестораны, расписание и исключения, залы, столы, гости, сотрудники, бронирования, история статусов, платежи |
-| ДЗ2 | `hw2` | таблица из девяти моделей самолётов |
-| ДЗ3 | `hw3` | numeric, identity/serial, boolean, массивы, даты и JSONB |
-| ДЗ4 | `hw4` | студенты и успеваемость, авиационные таблицы, ограничения, представления и JSONB |
-| ДЗ5 | `hw5` | LIKE, агрегаты, LEFT JOIN, рекурсивный CTE, EXCEPT и self join |
+| HW1 | `restaurant` | restaurants, opening hours and exceptions, dining halls, tables, guests, employees, reservations, status history, and payments |
+| HW2 | `hw2` | a table containing nine aircraft models |
+| HW3 | `hw3` | numeric types, identity and serial columns, booleans, arrays, dates, and JSONB |
+| HW4 | `hw4` | students and academic progress, aviation tables, constraints, views, and JSONB |
+| HW5 | `hw5` | LIKE, aggregates, LEFT JOIN, recursive CTE, EXCEPT, and self-join examples |
 
-В ресторанной схеме PostgreSQL сам проверяет:
+The restaurant schema enforces the following rules in PostgreSQL.
 
-- вместимость выбранного стола;
-- рабочие часы и отдельные закрытые даты;
-- отсутствие одновременных активных броней на один стол;
-- корректность контактов гостя, суммы платежа и возврата;
-- автоматическую запись каждого изменения статуса брони.
+- The party size must fit the selected table.
+- Reservations must fall within opening hours.
+- Active reservations for the same table cannot overlap.
+- Guest contact details, payment amounts, and refunds are validated.
+- Every reservation status change is recorded automatically.
 
-Функция `restaurant.find_available_tables(...)` ищет свободные столы, а представления `restaurant.daily_schedule` и `restaurant.reservation_financials` дают готовое расписание и финансовую сводку. Связи показаны в [ER-диаграмме](docs/schema.md).
+The `restaurant.find_available_tables(...)` function returns suitable free tables. The `restaurant.daily_schedule` and `restaurant.reservation_financials` views provide an operational schedule and a payment summary. See the [ER diagram](docs/schema.md) for the relationships.
 
-## Структура
+## Repository structure
 
 ```text
-docker/    автоматическая инициализация контейнера
-docs/      описание модели и ER-диаграмма
-reports/   исходные отчёты ДЗ1–ДЗ5
-scripts/   запуск демонстрационной базы
-sql/       DDL, синтетические данные и запросы
-tests/     проверки, выполняемые внутри PostgreSQL
+docker/    automatic container initialization
+docs/      data model notes and ER diagram
+reports/   original HW1–HW5 reports
+scripts/   one-command demo runner
+sql/       DDL, synthetic data, and example queries
+tests/     database-level verification
 ```
 
-Основные файлы:
+Key files include the following.
 
-- [`sql/01_restaurant_schema.sql`](sql/01_restaurant_schema.sql) — полная DDL-модель ресторана;
-- [`sql/02_restaurant_seed.sql`](sql/02_restaurant_seed.sql) — безопасные синтетические данные;
-- [`sql/60_demo_queries.sql`](sql/60_demo_queries.sql) — запросы для знакомства с базой;
-- [`tests/verify.sql`](tests/verify.sql) — позитивные и негативные проверки.
+- [`sql/01_restaurant_schema.sql`](sql/01_restaurant_schema.sql) defines the complete restaurant schema.
+- [`sql/02_restaurant_seed.sql`](sql/02_restaurant_seed.sql) loads fictional demonstration data.
+- [`sql/60_demo_queries.sql`](sql/60_demo_queries.sql) contains queries for exploring the database.
+- [`tests/verify.sql`](tests/verify.sql) verifies row counts, constraints, views, and query results.
 
-Остановить базу:
+Stop the containers with this command.
 
 ```bash
 docker compose down
 ```
 
-Удалить также локальные данные и затем собрать всё заново:
+Remove the local database volume and rebuild everything from scratch with these commands.
 
 ```bash
 docker compose down --volumes
 sh scripts/demo.sh
 ```
 
-## Отчёты
+## Assignment reports
 
-Исходные [ДЗ1](reports/DZ1_Sinyavskaya_MINDA261.pdf), [ДЗ2](reports/DZ2_Sinyavskaya_MINDA261.pdf), [ДЗ3](reports/DZ3_Sinyavskaya_MINDA261.pdf), [ДЗ4](reports/DZ4_Sinyavskaya_MINDA261.pdf) и [ДЗ5](reports/DZ5_Sinyavskaya_MINDA261.pdf) сохранены как подтверждение исходных заданий. Реализуемый код находится в `sql/`, а не внутри PDF. Все демонстрационные персональные данные вымышлены.
+The original [HW1](reports/DZ1_Sinyavskaya_MINDA261.pdf), [HW2](reports/DZ2_Sinyavskaya_MINDA261.pdf), [HW3](reports/DZ3_Sinyavskaya_MINDA261.pdf), [HW4](reports/DZ4_Sinyavskaya_MINDA261.pdf), and [HW5](reports/DZ5_Sinyavskaya_MINDA261.pdf) reports document the source assignments. Executable SQL is stored in the `sql/` directory. All personal data in the demonstration dataset is fictional.
