@@ -15,4 +15,4 @@ erDiagram
     RESERVATIONS ||--o{ PAYMENTS : has
 ```
 
-Это физическая модель PostgreSQL, создаваемая файлом [`sql/01_restaurant_schema.sql`](../sql/01_restaurant_schema.sql). Первичные и внешние ключи поддерживают ссылочную целостность. `CHECK`-ограничения и триггер проверяют бизнес-правила, а GiST exclusion constraint не позволяет сохранить пересекающиеся активные бронирования одного стола.
+This physical PostgreSQL model is created by [`sql/01_restaurant_schema.sql`](../sql/01_restaurant_schema.sql). Primary and foreign keys maintain referential integrity. `CHECK` constraints and a validation trigger enforce business rules. A GiST exclusion constraint prevents overlapping active reservations for the same table.
