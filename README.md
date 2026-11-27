@@ -1,42 +1,78 @@
-# PostgreSQL homework lab
+# PostgreSQL Homework Lab
 
-An executable companion to Anna Siniavskaia's SQL homework. This repository contains real PostgreSQL tables, synthetic example rows, queries, and database checks. The written reports are preserved alongside reproducible implementations of their core exercises.
+Рабочая PostgreSQL-база по пяти учебным работам Анны Синявской. Репозиторий не просто хранит отчёты: Docker с нуля создаёт настоящие таблицы, связи, представления, функции, триггеры и тестовые данные, а автоматические проверки доказывают, что ограничения работают.
 
-## Layout
+## Запуск одной командой
 
-```text
-sql/      schema, synthetic rows, and sample queries
-tests/    checks against the running PostgreSQL database
- reports/  original DZ1–DZ5 PDFs and the DZ2 aircrafts database backup
-```
-
-| Homework | Runnable part |
-| --- | --- |
-| DZ1 | `restaurant` schema: venues, dining tables, guests, reservations; foreign keys and an overlap constraint |
-| DZ2 | `hw2.aircrafts`: the nine aircraft rows used in the original PostgreSQL exercise setup |
-| DZ3 | `hw3` tables for numeric, serial, boolean, arrays, dates, and JSONB exercises |
-| DZ4 | `hw4` student progress constraints plus a compact aviation schema, role-oriented views, and JSONB attributes |
-| DZ5 | `hw5` views demonstrating LIKE, route deduplication, aggregates, LEFT JOIN, recursive CTE, EXCEPT, and a self-join |
-
-The sample guests are fictional. No database passwords, course datasets, or personal records are committed.
-
-## Run
-
-Requires Docker Compose. Create a local `.env` from `.env.example`, replace the placeholder with a password, then run:
+Нужен только Docker Desktop.
 
 ```bash
-docker compose up -d
-docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U homework -d homework -f /sql/00_setup.sql
-docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U homework -d homework -f /sql/30_queries.sql
-docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U homework -d homework -f /tests/verify.sql
+sh scripts/demo.sh
 ```
 
-The setup script is intended for a fresh database and creates the tables and sample rows once. The database is not published to a host port. PostgreSQL stores its data in a local Docker volume.
+После запуска таблицы можно открыть в браузере: [http://localhost:8088](http://localhost:8088).
 
-## What the checks cover
+| Поле Adminer | Значение |
+| --- | --- |
+| Движок | PostgreSQL |
+| Сервер | `db` |
+| Пользователь | `homework` |
+| Пароль | `homework_local` |
+| База данных | `homework` |
 
-The verification script checks row counts and proves that PostgreSQL rejects overlapping reservations, whitespace-only names, and marks incompatible with a test form. It also checks the DZ5 recursive CTE, unsold-route handling, reverse-route deduplication, and set difference. The suite is run against PostgreSQL 16 in a disposable container. The restaurant schema does not yet enforce that `party_size` is at most the selected table's `seats`; callers should validate that rule before using it as an application database.
+Свой пароль можно задать переменной `POSTGRES_PASSWORD`. Порты доступны только на `127.0.0.1`, поэтому учебная база не публикуется в локальную сеть.
 
-## Reports
+## Что создаётся
 
-The original [DZ1](reports/DZ1_Sinyavskaya_MINDA261.pdf), [DZ2](reports/DZ2_Sinyavskaya_MINDA261.pdf), [DZ3](reports/DZ3_Sinyavskaya_MINDA261.pdf), [DZ4](reports/DZ4_Sinyavskaya_MINDA261.pdf), and [DZ5](reports/DZ5_Sinyavskaya_MINDA261.pdf) reports are included. The [DZ2 aircrafts backup](reports/DZ2_aircrafts_backup.sql) is preserved for comparison; the runnable setup uses `sql/10_aircrafts.sql`. The repository remains private while redistribution rights for exercise text are reviewed.
+| Работа | Схема | Реализация |
+| --- | --- | --- |
+| ДЗ1 | `restaurant` | рестораны, расписание и исключения, залы, столы, гости, сотрудники, бронирования, история статусов, платежи |
+| ДЗ2 | `hw2` | таблица из девяти моделей самолётов |
+| ДЗ3 | `hw3` | numeric, identity/serial, boolean, массивы, даты и JSONB |
+| ДЗ4 | `hw4` | студенты и успеваемость, авиационные таблицы, ограничения, представления и JSONB |
+| ДЗ5 | `hw5` | LIKE, агрегаты, LEFT JOIN, рекурсивный CTE, EXCEPT и self join |
+
+В ресторанной схеме PostgreSQL сам проверяет:
+
+- вместимость выбранного стола;
+- рабочие часы и отдельные закрытые даты;
+- отсутствие одновременных активных броней на один стол;
+- корректность контактов гостя, суммы платежа и возврата;
+- автоматическую запись каждого изменения статуса брони.
+
+Функция `restaurant.find_available_tables(...)` ищет свободные столы, а представления `restaurant.daily_schedule` и `restaurant.reservation_financials` дают готовое расписание и финансовую сводку. Связи показаны в [ER-диаграмме](docs/schema.md).
+
+## Структура
+
+```text
+docker/    автоматическая инициализация контейнера
+docs/      описание модели и ER-диаграмма
+reports/   исходные отчёты ДЗ1–ДЗ5
+scripts/   запуск демонстрационной базы
+sql/       DDL, синтетические данные и запросы
+tests/     проверки, выполняемые внутри PostgreSQL
+```
+
+Основные файлы:
+
+- [`sql/01_restaurant_schema.sql`](sql/01_restaurant_schema.sql) — полная DDL-модель ресторана;
+- [`sql/02_restaurant_seed.sql`](sql/02_restaurant_seed.sql) — безопасные синтетические данные;
+- [`sql/60_demo_queries.sql`](sql/60_demo_queries.sql) — запросы для знакомства с базой;
+- [`tests/verify.sql`](tests/verify.sql) — позитивные и негативные проверки.
+
+Остановить базу:
+
+```bash
+docker compose down
+```
+
+Удалить также локальные данные и затем собрать всё заново:
+
+```bash
+docker compose down --volumes
+sh scripts/demo.sh
+```
+
+## Отчёты
+
+Исходные [ДЗ1](reports/DZ1_Sinyavskaya_MINDA261.pdf), [ДЗ2](reports/DZ2_Sinyavskaya_MINDA261.pdf), [ДЗ3](reports/DZ3_Sinyavskaya_MINDA261.pdf), [ДЗ4](reports/DZ4_Sinyavskaya_MINDA261.pdf) и [ДЗ5](reports/DZ5_Sinyavskaya_MINDA261.pdf) сохранены как подтверждение исходных заданий. Реализуемый код находится в `sql/`, а не внутри PDF. Все демонстрационные персональные данные вымышлены.

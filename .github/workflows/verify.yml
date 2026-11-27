@@ -1,0 +1,19 @@
+name: Verify PostgreSQL schemas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build database from a clean volume
+        run: docker compose up --detach --wait db
+      - name: Run database checks again
+        run: docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U homework -d homework -f /tests/verify.sql
+      - name: Show PostgreSQL logs on failure
+        if: failure()
+        run: docker compose logs --no-color db

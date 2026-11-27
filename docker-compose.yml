@@ -4,16 +4,29 @@ services:
     environment:
       POSTGRES_DB: homework
       POSTGRES_USER: homework
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Create .env with a local password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-homework_local}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql:/sql:ro
       - ./tests:/tests:ro
+      - ./docker/init.sh:/docker-entrypoint-initdb.d/10_init.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U homework -d homework"]
       interval: 5s
       timeout: 3s
       retries: 12
+
+  adminer:
+    image: adminer:4
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8088}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
